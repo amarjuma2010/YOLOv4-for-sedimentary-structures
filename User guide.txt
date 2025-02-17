@@ -1,0 +1,111 @@
+# YOLOv4 Object Detection for Sedimentary Structures in Google Colab
+
+## Introduction
+This guide provides step-by-step instructions for running YOLOv4 object detection on images and videos in Google Colab. It includes installing dependencies, setting up the environment, and running inference on multiple images and videos.
+
+---
+
+## 1. Open and Upload the Notebook
+1. Open [Google Colab](https://colab.research.google.com/).
+2. Click **File > Open Notebook**.
+3. Select the **Upload** tab.
+4. Click **Browse** and navigate to the `yolo-files` folder.
+5. Upload `Object_detection_for_sedimentary_structures.ipynb`.
+
+---
+
+## 2. Install Dependencies and Clone Darknet
+Run the following commands in a new Colab cell:
+
+```bash
+# Clone Darknet
+!git clone https://github.com/AlexeyAB/darknet.git
+
+# Navigate to darknet folder
+%cd darknet
+
+# Modify Makefile to enable GPU, OpenCV, and CUDNN
+!sed -i 's/GPU=0/GPU=1/' Makefile
+!sed -i 's/CUDNN=0/CUDNN=1/' Makefile
+!sed -i 's/CUDNN_HALF=0/CUDNN_HALF=1/' Makefile
+!sed -i 's/OPENCV=0/OPENCV=1/' Makefile
+
+# Compile Darknet
+!make
+```
+
+---
+
+## 3. Upload Necessary Files
+1. Inside Google Colab, open the **Files** tab.
+2. Navigate to `/content/darknet/`.
+3. Upload files as follows:
+   - **Upload YOLO config file** (`yolov4-custom.cfg`) into `cfg/`.
+   - **Upload class names** (`obj.names`) and **data file** (`obj.data`) into `data/`. (after uploading these two files consider renaming through deleting .txt extension and keep the main file name only i.e. obj.data.txt should be renamed as obj.data and obj.names.txt should be renamed as obj.names)
+   - **Create a folder** named `weights/` and upload the `.weights` file into it.
+   - **Create a folder** named `images/` and upload images into it.
+   - **Create a folder** named `videos/` and upload videos into it.
+
+---
+
+## 4. Run YOLO on a Video
+To test YOLO on a video and save the output:
+
+```bash
+!./darknet detector demo data/obj.data cfg/yolov4-custom.cfg weights/yolov4-custom_final.weights -dont_show -ext_output -out_filename videos/output1.mp4 videos/video1.mp4
+```
+
+### Download the Processed Video
+```python
+from google.colab import files
+files.download("videos/output1.mp4")
+```
+
+---
+
+## 5. Run YOLO on Multiple Images
+Use the following Python script to detect objects in multiple images:
+
+```python
+import os
+
+# Define paths
+image_folder = "/content/darknet/images"
+output_folder = "/content/darknet/detected_images"
+
+# Create output folder if it doesn't exist
+os.makedirs(output_folder, exist_ok=True)
+
+# Get list of images in the folder
+image_files = [f for f in os.listdir(image_folder) if f.endswith(".jpg") or f.endswith(".png")]
+
+# Run YOLO on each image
+for image in image_files:
+    input_path = f"images/{image}"
+    output_path = f"{output_folder}/detected_{image}"
+
+    # Run detection
+    command = f"./darknet detector test data/obj.data cfg/yolov4-custom.cfg weights/yolov4-custom_final.weights {input_path} -dont_show -ext_output"
+    os.system(command)
+
+    # Move and rename the detected image
+    os.system(f"mv predictions.jpg {output_path}")
+
+print("Detection complete for all images.")
+```
+
+### Display Detected Images
+```python
+from IPython.display import display, Image
+import glob
+
+detected_images = glob.glob("/content/darknet/detected_images/*.jpg")
+for img_path in detected_images:
+    display(Image(img_path))
+```
+
+---
+
+## Conclusion
+This guide provides a streamlined approach to setting up YOLOv4 for detecting sedimentary structures in images and videos using Google Colab. Follow these steps to ensure smooth execution, and modify paths as necessary to suit your dataset.
+
