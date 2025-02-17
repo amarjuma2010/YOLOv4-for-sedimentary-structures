@@ -1,0 +1,3 @@
+classes = 20  
+names = data/obj.names
+backup = backup/
